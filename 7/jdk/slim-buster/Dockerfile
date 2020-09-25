@@ -11,7 +11,7 @@ RUN set -eux; \
 # Default to UTF-8 file.encoding
 ENV LANG C.UTF-8
 
-ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64/jre
+ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
 ENV PATH $JAVA_HOME/bin:$PATH
 
 # backwards compatibility shim
@@ -60,7 +60,15 @@ RUN set -eux; \
     ; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
-    update-alternatives --remove java /usr/lib/jvm/java-11-openjdk-amd64/bin/java ;\
+    update-alternatives --remove java /usr/lib/jvm/java-11-openjdk-amd64/bin/java; \
+    rm -rf /usr/lib/jvm/java-11-openjdk-amd64 ; \
+	\
+    savedAptMark="$(apt-mark showmanual)"; \
+# TODO strip "demo" and "man" folders?
+	\
+	apt-mark auto '.*' > /dev/null; \
+	[ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; \
+	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
 	\
 # update "cacerts" bundle to use Debian's CA certificates (and make sure it stays up-to-date with changes to Debian's store)
 # see https://github.com/docker-library/openjdk/issues/327
